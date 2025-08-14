@@ -14,16 +14,16 @@ Aplikasi ini dibangun menggunakan **Next.js** dan **TypeScript**, dengan fokus p
 
 ## 🖼 Preview
 Halaman Login  
-![Login Page](./public/screenshots/login-preview.png)
+![Login Page](./login-preview.png)
 
 Halaman Register  
-![Register Page](./public/screenshots/register-preview.png)
+![Register Page](./register-preview.png)
 
 Halaman Todo  
-![Todo Page](./public/screenshots/todo-page-preview.png)
+![Todo Page](./todo-page-preview.png)
 
 Halaman Admin  
-![Admin Page](./public/screenshots/admin-page-preview.png)
+![Admin Page](./admin-page-preview.png)
 
 ---
 
