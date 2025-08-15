@@ -80,3 +80,6 @@ Halaman Admin
 43. **Jalankan Website di Mode Pengembangan**
     ```bash
     http://localhost:3000
+
+**Live Demo:** 
+[technical-assessment-front-end.vercel.app](https://technical-assessment-front-end.vercel.app/)
