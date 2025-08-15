@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from 'next/link';
+import { AxiosError } from 'axios'; 
 
 export default function LoginForm() {
   const [formData, setFormData] = useState({
@@ -40,15 +41,18 @@ export default function LoginForm() {
 
       toast.success("Login berhasil!");
 
-      
       if (user.role === 'ADMIN') {
         router.push('/admin');
       } else {
         router.push('/todo');
       }
 
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Email atau password salah.");
+    } catch (error) { 
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data?.message || "Email atau password salah.");
+      } else {
+        toast.error("Terjadi kesalahan yang tidak terduga.");
+      }
       console.error(error);
     } finally {
       setLoading(false);

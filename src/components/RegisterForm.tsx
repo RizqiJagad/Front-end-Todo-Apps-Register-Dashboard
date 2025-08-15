@@ -3,13 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea"; // Import Textarea
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select
+import { Textarea } from "@/components/ui/textarea"; 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/authApi";
+import { AxiosError } from "axios";
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState({
@@ -36,6 +37,13 @@ export default function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Password dan konfirmasi password tidak cocok.");
+      return;
+    }
+
     setLoading(true);
     try {
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
@@ -48,8 +56,13 @@ export default function RegisterForm() {
       await apiClient.post('/register', dataToSend);
       toast.success("Pendaftaran berhasil! Silakan login.");
       router.push('/login');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Terjadi kesalahan saat pendaftaran.");
+    } catch (error: unknown) { 
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data?.message || "Terjadi kesalahan saat pendaftaran.");
+      } else {
+        toast.error("Terjadi kesalahan yang tidak terduga.");
+      }
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -59,7 +72,7 @@ export default function RegisterForm() {
     <Card className="w-[500px] shadow-lg">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl font-bold">Register</CardTitle>
-        <CardDescription>Let's Sign up first for enter into Square Website. Uh She Up!</CardDescription>
+        <CardDescription>Let&apos;s Sign up first for enter into Square Website. Uh She Up!</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

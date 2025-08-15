@@ -12,6 +12,14 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Check, X, Star, Trash2 } from "lucide-react";
+import Image from "next/image";
+
+
+type Todo = {
+  id: string;
+  item: string;
+  isDone: boolean;
+};
 
 export default function TodoPage() {
   const router = useRouter();
@@ -23,8 +31,8 @@ export default function TodoPage() {
   );
   const queryClient = useQueryClient();
 
-  // Fetch todos
-  const { data: todos, isLoading } = useQuery({
+  
+  const { data: todos, isLoading } = useQuery<Todo[]>({
     queryKey: ["todos", filterStatus],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -34,11 +42,12 @@ export default function TodoPage() {
         params.append("filters", '{"isDone":false}');
       }
       const { data } = await authApiClient.get("/todos", { params });
-      return data.content.entries;
+      
+      return data.content.entries as Todo[];
     },
   });
 
-  // Create todo
+  
   const createTodoMutation = useMutation({
     mutationFn: (newItem: string) => {
       return authApiClient.post("/todos", { item: newItem });
@@ -48,9 +57,12 @@ export default function TodoPage() {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
       setNewTodoText("");
     },
+    onError: () => {
+      toast.error("Gagal membuat todo.");
+    },
   });
 
-  // Mark todo
+  
   const markTodoMutation = useMutation({
     mutationFn: ({ id, action }: { id: string; action: "DONE" | "UNDONE" }) => {
       return authApiClient.put(`/todos/${id}/mark`, { action });
@@ -59,24 +71,26 @@ export default function TodoPage() {
       toast.success("Status Todo berhasil diperbarui!");
       queryClient.invalidateQueries({ queryKey: ["todos"] });
     },
+    onError: () => {
+      toast.error("Gagal memperbarui status todo.");
+    },
   });
 
-  // Delete todo
-  const deleteTodoMutation = useMutation({
-    mutationFn: (id: string) => {
-      return authApiClient.delete(`/todos/${id}`);
+  
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => {
+      return authApiClient.delete("/todos/bulk-delete", { data: { ids } });
     },
     onSuccess: () => {
-      toast.success("Todo berhasil dihapus!");
+      toast.success("Todos berhasil dihapus!");
       queryClient.invalidateQueries({ queryKey: ["todos"] });
     },
-    onError: (error) => {
-      console.error("Gagal menghapus todo:", error);
-      toast.error("Gagal menghapus todo. Token mungkin tidak valid.");
+    onError: () => {
+      toast.error("Gagal menghapus todos.");
     },
   });
 
-  // Handlers
+ 
   const handleCreateTodo = (e: React.FormEvent) => {
     e.preventDefault();
     if (newTodoText.trim()) {
@@ -102,7 +116,8 @@ export default function TodoPage() {
   };
 
   const handleSingleDeleteTodo = (id: string) => {
-    deleteTodoMutation.mutate(id);
+   
+    bulkDeleteMutation.mutate([id]);
   };
 
   const handleDeleteSelected = () => {
@@ -112,10 +127,11 @@ export default function TodoPage() {
           `Apakah Anda yakin ingin menghapus ${selectedTodos.size} item terpilih?`
         )
       ) {
-        selectedTodos.forEach((id) => {
-          deleteTodoMutation.mutate(id);
+        bulkDeleteMutation.mutate(Array.from(selectedTodos), {
+          onSuccess: () => {
+            setSelectedTodos(new Set());
+          },
         });
-        setSelectedTodos(new Set());
       }
     }
   };
@@ -142,10 +158,13 @@ export default function TodoPage() {
           <span className="font-medium text-lg">
             {user?.fullName || "Pengguna"}
           </span>
-          <img
+          
+          <Image
             src="/avatar.png"
             alt="Avatar"
-            className="w-20 h-13 rounded-full"
+            width={52}
+            height={52}
+            className="w-13 h-13 rounded-full"
           />
           <Button onClick={handleLogout} variant="ghost">
             Logout
@@ -153,13 +172,13 @@ export default function TodoPage() {
         </div>
       </header>
 
-      {/* Main content */}
+     
       <div className="container mx-auto p-4 max-w-2xl">
         <h1 className="text-center text-3xl font-bold mt-8 mb-4">To Do</h1>
 
         <Card className="shadow-lg">
           <CardContent>
-            {/* Filter buttons */}
+           
             <div className="flex space-x-2 mb-4 justify-center">
               <Button
                 onClick={() => setFilterStatus("all")}
@@ -181,19 +200,22 @@ export default function TodoPage() {
               </Button>
             </div>
 
-            {/* Create todo form */}
+            
             <form onSubmit={handleCreateTodo} className="flex space-x-2 mb-4">
               <Input
                 placeholder="Add a new task"
                 value={newTodoText}
                 onChange={(e) => setNewTodoText(e.target.value)}
+                disabled={createTodoMutation.isPending}
               />
-              <Button type="submit">Add Todo</Button>
+              <Button type="submit" disabled={createTodoMutation.isPending}>
+                {createTodoMutation.isPending ? "Adding..." : "Add Todo"}
+              </Button>
             </form>
 
-            {/* Todo list */}
+            
             <ul className="space-y-2">
-              {todos?.map((todo: any) => (
+              {todos?.map((todo: Todo) => (
                 <li
                   key={todo.id}
                   className="flex items-center justify-between p-2 border rounded"
@@ -239,14 +261,15 @@ export default function TodoPage() {
               ))}
             </ul>
 
-            {/* Delete selected button */}
             <Button
               variant="destructive"
               className="mt-4"
               onClick={handleDeleteSelected}
-              disabled={selectedTodos.size === 0}
+              disabled={selectedTodos.size === 0 || bulkDeleteMutation.isPending}
             >
-              Delete Selected ({selectedTodos.size})
+              {bulkDeleteMutation.isPending
+                ? "Deleting..."
+                : `Delete Selected (${selectedTodos.size})`}
             </Button>
           </CardContent>
         </Card>
