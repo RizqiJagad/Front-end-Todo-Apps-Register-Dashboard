@@ -1,7 +1,7 @@
 # NodeWave Front End Candidate Assessment: Todo App
 
 Ini adalah implementasi aplikasi **To-Do**.  
-Aplikasi ini dibangun menggunakan **Next.js** dan **TypeScript**, dengan fokus pada kualitas kode, performa, dan fungsionalitas yang sesuai dengan persyaratan.
+Aplikasi ini dibangun menggunakan **Next.js** dan **TypeScript**, dengan fokus pada kualitas kode, performa.
 
 ---
 
